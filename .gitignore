@@ -1,10 +1,2 @@
-stream-video-browser.zip
-stream-video=browswer
 .vscode
-stream-video-browser/webstreaming.py
-stream-video-browser/pyimagesearch/__init__.py
-stream-video-browser/pyimagesearch/__pycache__/__init__.cpython-35.pyc
-stream-video-browser/pyimagesearch/motion_detection/__init__.py
-stream-video-browser/pyimagesearch/motion_detection/singlemotiondetector.py
-stream-video-browser/pyimagesearch/motion_detection/__pycache__/__init__.cpython-35.pyc
-stream-video-browser/pyimagesearch/motion_detection/__pycache__/singlemotiondetector.cpython-35.pyc
+.venv
