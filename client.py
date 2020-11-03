@@ -1,4 +1,4 @@
-from imutils.video import VideoStream
+from imutils.video import WebcamVideoStream
 from flask import Response
 from flask import Flask
 from flask import render_template
@@ -8,7 +8,6 @@ import datetime
 import imutils
 import time
 import cv2
-
 
 # initialize the output frame and a lock used to ensure thread-safe
 # exchanges of the output frames (useful for multiple browsers/tabs
@@ -21,8 +20,7 @@ app = Flask(__name__)
 
 # initialize the video stream and allow the camera sensor to
 # warmup
-#vs = VideoStream(usePiCamera=1).start()
-vs = VideoStream(src=0).start()
+vs = WebcamVideoStream(src=0).start()
 time.sleep(2.0)
 
 @app.route("/")
@@ -30,12 +28,12 @@ def index():
 	# return the rendered template
 	return render_template("index.html")
 
-def detect_motion(frameCount):
+def get_frame(frameCount):
     global vs, outputFrame, lock
 
     while True:
 	    frame = vs.read()
-	    # frame = imutils.resize(frame, width=400)
+	    frame = imutils.resize(frame, width=1200)
 
 		# grab the current timestamp and draw it on the frame
 	    timestamp = datetime.datetime.now()
@@ -92,7 +90,7 @@ if __name__ == '__main__':
 	args = vars(ap.parse_args())
 
 	# start a thread that will perform motion detection
-	t = threading.Thread(target=detect_motion, args=(
+	t = threading.Thread(target=get_frame, args=(
 		args["frame_count"],))
 	t.daemon = True
 	t.start()
