@@ -1,6 +1,6 @@
 # RoverCam
 
-This is the repositiory for the video streamer.
+This is the repository for the video streamer.
 
 It requires python3 and 3 libraries:
 - imutils
