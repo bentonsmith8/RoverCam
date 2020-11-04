@@ -33,9 +33,10 @@ def get_frame(frameCount):
 
     while True:
 	    frame = vs.read()
-	    frame = imutils.resize(frame, width=1200)
+	    frame = imutils.resize(frame, width=600)
 
 		# grab the current timestamp and draw it on the frame
+		# may not be useful and can be disabled
 	    timestamp = datetime.datetime.now()
 	    cv2.putText(frame, timestamp.strftime(
 			"%A %d %B %Y %I:%M:%S%p"), (10, frame.shape[0] - 10),
@@ -60,7 +61,8 @@ def generate():
 				continue
 
 			# encode the frame in JPEG format
-			(flag, encodedImage) = cv2.imencode(".jpg", outputFrame)
+			encoding_parameters = [int(cv2.IMWRITE_JPEG_QUALITY), 50]
+			(flag, encodedImage) = cv2.imencode(".jpg", outputFrame, encoding_parameters)
 
 			# ensure the frame was successfully encoded
 			if not flag:
