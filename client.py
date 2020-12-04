@@ -18,10 +18,11 @@ lock = threading.Lock()
 # initialize a flask object
 app = Flask(__name__)
 
+
 # initialize the video stream and allow the camera sensor to
 # warmup
-vs = WebcamVideoStream(src=0).start()
-time.sleep(2.0)
+def startSteam(src):
+	return WebcamVideoStream(src).start()
 
 @app.route("/")
 def index():
@@ -31,7 +32,7 @@ def index():
 def get_frame(frameCount):
     global vs, outputFrame, lock
 
-    while True:
+    while True and vs is not None:
 	    frame = vs.read()
 	    frame = imutils.resize(frame, width=600)
 
@@ -68,9 +69,12 @@ def generate():
 			if not flag:
 				continue
 
+		send = False
 		# yield the output frame in the byte format
-		yield(b'--frame\r\n' b'Content-Type: image/jpeg\r\n\r\n' + 
-			bytearray(encodedImage) + b'\r\n')
+		if (True):
+			yield(b'--frame\r\n' b'Content-Type: image/jpeg\r\n\r\n' + 
+				bytearray(encodedImage) + b'\r\n')
+		# send = not send
 
 @app.route("/video_feed")
 def video_feed():
@@ -81,6 +85,7 @@ def video_feed():
 
 # check to see if this is the main thread of execution
 if __name__ == '__main__':
+	global vs
 	# construct the argument parser and parse command line arguments
 	ap = argparse.ArgumentParser()
 	ap.add_argument("-i", "--ip", type=str, required=True,
@@ -89,9 +94,12 @@ if __name__ == '__main__':
 		help="ephemeral port number of the server (1024 to 65535)")
 	ap.add_argument("-f", "--frame-count", type=int, default=32,
 		help="# of frames used to construct the background model")
-	args = vars(ap.parse_args())
+	ap.add_argument("-s", "--source", type=int, default=0,
+		help="index of camera to use")
 
-	# start a thread that will perform motion detection
+	args = vars(ap.parse_args())
+	# start a thread that will grab frames from camera
+	vs = startSteam(args["source"])
 	t = threading.Thread(target=get_frame, args=(
 		args["frame_count"],))
 	t.daemon = True
