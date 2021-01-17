@@ -6,8 +6,12 @@ find_package( OpenCV REQUIRED )
 
 include_directories("${PROJECT_SOURCE_DIR}")
 
-file(GLOB SOURCES "*.cpp")
+# file(GLOB SOURCES "*.cpp")
 
-add_executable(RoverCam ${SOURCES})
+add_executable(server server.cpp)
+add_executable(client client.cpp)
 
-target_link_libraries( RoverCam ${OpenCV_LIBS})
+SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -pthread")
+
+target_link_libraries(server ${OpenCV_LIBS})
+target_link_libraries(client ${OpenCV_LIBS})
