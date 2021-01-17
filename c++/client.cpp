@@ -40,6 +40,7 @@ int main(int argc, char** argv)
     Mat img;
     img = Mat::zeros(480, 640, CV_16UC3);
     int imgSize = img.total() * img.elemSize();
+    // int imgSize = img.rows*img.cols*CV_ELEM_SIZE(img.type());
     uchar *iptr = img.data;
     int bytes = 0;
     int key;
@@ -57,7 +58,7 @@ int main(int argc, char** argv)
         if ((bytes = recv(sokt, iptr, imgSize, MSG_WAITALL)) == -1) {
             std::cerr << "recv failed, received bytes = " << bytes << std::endl;
         }
-
+        std::cout << "bytes = " << bytes << std::endl;
         cv::imshow("CV Video Client", img);
 
         if (key = cv::waitKey(10) >= 0) break;

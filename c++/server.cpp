@@ -16,7 +16,7 @@ using namespace std;
 
 int device = 2;
 
-VideoCapture cap(device, CAP_V4L2);
+VideoCapture cap(device);
 
 void *display(void *);
 
@@ -82,6 +82,8 @@ void *display(void *ptr){
     }
 
     int imgSize = img.total() * img.elemSize();
+    // Current bytes: 1843200
+    // int imgSize = img.rows*img.cols*CV_ELEM_SIZE(img.type());
     int bytes = 0;
     int key;
 
@@ -90,12 +92,13 @@ void *display(void *ptr){
     }
 
     std::cout << "Image Size: " << imgSize << std::endl;
-    // namedWindow("CV Server", 1);
+    std::cout << "Img.data size: " << sizeof(img.data) << std::endl;
+    namedWindow("CV Server", 1);
 
     while (1)
     {
         cap.read(img);
-        // imshow("CV Server", img);
+        imshow("CV Server", img);
         if ((bytes = send(socket, img.data, imgSize, 0)) < 0) {
             std::cerr << "bytes = " << bytes << std::endl;
             break;
