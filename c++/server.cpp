@@ -14,7 +14,7 @@
 using namespace cv;
 using namespace std;
 
-int device = 2;
+int device = 1;
 
 VideoCapture cap(device);
 
@@ -75,7 +75,7 @@ void *display(void *ptr){
     int socket = *(int *)ptr;
 
     Mat img;
-    img = Mat::zeros(480,640,CV_16UC3);
+    img = Mat::zeros(480,640,CV_8UC1);
 
     if (!img.isContinuous()) { 
         img = img.clone();
@@ -93,12 +93,12 @@ void *display(void *ptr){
 
     std::cout << "Image Size: " << imgSize << std::endl;
     std::cout << "Img.data size: " << sizeof(img.data) << std::endl;
-    namedWindow("CV Server", 1);
+    //namedWindow("CV Server", 1);
 
     while (1)
     {
         cap.read(img);
-        imshow("CV Server", img);
+        //imshow("CV Server", img);
         if ((bytes = send(socket, img.data, imgSize, 0)) < 0) {
             std::cerr << "bytes = " << bytes << std::endl;
             break;
