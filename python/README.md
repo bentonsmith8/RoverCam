@@ -1,10 +1,8 @@
 # RoverCam Python
 
-This is the python video streamer. This works on the rover with a few extra steps which are detailed below.
+This is the python video streamer. It requires python3 version >3.8.5, 3 libraries, and creation of a virtual environment ahead of time. This works on the rover with a few extra steps which are detailed below.
 
-## Installation
-
-It requires python3 version >3.8.5, 3 libraries, and creation of a virtual environment ahead of time.
+## Setting Up A Virtual Environment
 
 To create a virtual environment, first install virtual environments with
 ```
@@ -17,11 +15,14 @@ Make sure you are in /RoverCam/python then run
 python3 -m venv .
 ```
 
-This will create a new virtual environment in /RoverCam/python. Activate the virtual environment (on linux) with:
+This will create a new virtual environment in /RoverCam/python. The virtual environment must be activated every time the program needs to be run which can be done (on Linux) with:
 
 ```
 source ./bin/activate
 ```
+---
+
+## Installing Packages
 
 Next, these four packages need to be installed
 
@@ -41,7 +42,9 @@ The imutils package needs to be installed using the flag --no-cache-dir like so:
 ```
 pip install imutils --no-cache-dir
 ```
+---
 
+## Usage
 To run, use
 
 ```
