@@ -4,3 +4,8 @@
 *.out
 build
 c++/build
+python/bin
+python/lib*
+python/include
+python/share
+python/pyvenv.cfg

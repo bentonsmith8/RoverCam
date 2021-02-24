@@ -32,9 +32,9 @@ def index():
 def get_frame(frameCount):
     global vs, outputFrame, lock
 
-    while True and vs is not None:
+    while vs is not None:
 	    frame = vs.read()
-	    frame = imutils.resize(frame, width=600)
+	    frame = imutils.resize(frame, width=800)
 
 		# grab the current timestamp and draw it on the frame
 		# may not be useful and can be disabled
@@ -69,11 +69,12 @@ def generate():
 			if not flag:
 				continue
 
-		send = False
+		# send = False
 		# yield the output frame in the byte format
 		if (True):
 			yield(b'--frame\r\n' b'Content-Type: image/jpeg\r\n\r\n' + 
 				bytearray(encodedImage) + b'\r\n')
+			# print('image sent')
 		# send = not send
 
 @app.route("/video_feed")
@@ -94,7 +95,7 @@ if __name__ == '__main__':
 		help="ephemeral port number of the server (1024 to 65535)")
 	ap.add_argument("-f", "--frame-count", type=int, default=32,
 		help="# of frames used to construct the background model")
-	ap.add_argument("-s", "--source", type=int, default=0,
+	ap.add_argument("-s", "--source", type=int, default=2,
 		help="index of camera to use")
 
 	args = vars(ap.parse_args())
