@@ -1,58 +1,86 @@
-from signal import signal, SIGINT
+import time
+from argparse import ArgumentParser
+from signal import SIGINT, signal
 from sys import exit
+
 import cv2
 import numpy as np
 import zmq
-from argparse import ArgumentParser
-import time
+
 
 def cleanup():
+    '''
+    Clean up the context and socket
+    '''
     context.destroy()
 
+
 def handler(signal_received, frame):
+    '''
+    Handle any cleanup here
+    '''
     cleanup()
     print('SIGINT or CTRL-C detected. Exiting gracefully')
     exit(0)
 
+# bind the handler to SIGINT
 signal(SIGINT, handler)
 
+# construct the argument parser and parse the arguments
 parser = ArgumentParser()
-parser.add_argument('--ip', type=str, default='localhost', help='IP address of the server')
-parser.add_argument('--port', type=int, default=5555, help='Port of the server')
+parser.add_argument('-i', type=str, default='localhost',
+                    help='IP address of the server')
+parser.add_argument('-o', type=int, default=5555, help='Port of the server')
 args = parser.parse_args()
-hostname = 'tcp://{}:{}'.format(args.ip, args.port)
+hostname = 'tcp://{}:{}'.format(args.i, args.o)
 
+# create the zmq context and socket
+# note, the zmq context only needs to be created once but it
+# can create multiple sockets
 context = zmq.Context()
+# create a subscriber socket
 socket = context.socket(zmq.SUB)
+# set the subscription to receive all messages (the '' part)
 socket.setsockopt_string(zmq.SUBSCRIBE, '')
-socket.setsockopt(zmq.RCVHWM, 1)
-socket.setsockopt(zmq.RCVBUF, 0)
-# socket.setsockopt(zmq.CONFLATE, 1)
+# set the high water mark to 2
+# what this means is that the socket will only buffer 2 messages at a time
+# if the socket is full, it will drop any new messages
+socket.setsockopt(zmq.SNDHWM, 2)
+socket.setsockopt(zmq.RCVHWM, 2)
+# connect the socket to the server
 socket.connect(hostname)
 
-current_time = last_time = time.perf_counter()
-
+# loop and receive the messages
 while True:
-    current_time = time.perf_counter()
-    time_diff = current_time - last_time
-    last_time = current_time
-    fps = 1 / time_diff
-    print('FPS: {0:2.2f}'.format(fps), end='\t')
+    # measure time to receive the message
     start = time.perf_counter()
-    md = socket.recv_json()
-    msg = socket.recv()
+    # receive the message
+    try:
+        md = socket.recv_json(zmq.NOBLOCK)
+        msg = socket.recv(zmq.NOBLOCK)
+    except zmq.Again:
+        # if the msg is empty, wait 10ms and try again
+        time.sleep(0.01)
+        continue
     end = time.perf_counter()
-    print('Time to receive: {0:3.2f} ms'.format((end - start) * 1000), end='\t')
+
+    print('Time to receive: {0:3.2f} ms'.format(
+        (end - start) * 1000), end='\t')
+    
+    # measure time to decode the image
     start = time.perf_counter()
     if md['type'] == 'jpg':
+        # if image is a jpg, decode it
         A = np.frombuffer(msg, dtype=np.uint8)
         image = cv2.imdecode(A, 1)
     else:
+        # if image is raw, reshape it
         A = np.frombuffer(msg, dtype=md['dtype'])
         image = A.reshape(md['shape'])
     end = time.perf_counter()
+
     print('Time to decode: {0:3.2f} ms'.format((end - start) * 1000))
+
+    # display the image
     cv2.imshow('Video Stream', image)
     cv2.waitKey(1)
-
-context.destroy()
