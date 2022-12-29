@@ -45,8 +45,8 @@ socket.setsockopt_string(zmq.SUBSCRIBE, '')
 # set the high water mark to 2
 # what this means is that the socket will only buffer 2 messages at a time
 # if the socket is full, it will drop any new messages
-socket.setsockopt(zmq.SNDHWM, 2)
-socket.setsockopt(zmq.RCVHWM, 2)
+socket.setsockopt(zmq.SNDHWM, 3)
+socket.setsockopt(zmq.RCVHWM, 3)
 # connect the socket to the server
 socket.connect(hostname)
 
@@ -54,10 +54,15 @@ socket.connect(hostname)
 while True:
     # measure time to receive the message
     start = time.perf_counter()
+    images = []
     # receive the message
     try:
         md = socket.recv_json(zmq.NOBLOCK)
-        msg = socket.recv(zmq.NOBLOCK)
+        for i in range(md['count']):
+            msg = socket.recv(zmq.NOBLOCK)
+            A = np.frombuffer(msg, dtype=np.uint8)
+            image = cv2.imdecode(A, 1)
+            images.append(image)
     except zmq.Again:
         # if the msg is empty, wait 10ms and try again
         time.sleep(0.01)
@@ -65,22 +70,9 @@ while True:
     end = time.perf_counter()
 
     print('Time to receive: {0:3.2f} ms'.format(
-        (end - start) * 1000), end='\t')
-    
-    # measure time to decode the image
-    start = time.perf_counter()
-    if md['type'] == 'jpg':
-        # if image is a jpg, decode it
-        A = np.frombuffer(msg, dtype=np.uint8)
-        image = cv2.imdecode(A, 1)
-    else:
-        # if image is raw, reshape it
-        A = np.frombuffer(msg, dtype=md['dtype'])
-        image = A.reshape(md['shape'])
-    end = time.perf_counter()
-
-    print('Time to decode: {0:3.2f} ms'.format((end - start) * 1000))
+        (end - start) * 1000))
 
     # display the image
-    cv2.imshow('Video Stream', image)
+    for i in range(len(images)):
+        cv2.imshow('Video Stream {}'.format(i), images[i])
     cv2.waitKey(1)

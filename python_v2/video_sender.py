@@ -38,7 +38,6 @@ class VideoStream:
         self.stream.set(cv2.CAP_PROP_FOURCC,
                         cv2.VideoWriter_fourcc('M', 'J', 'P', 'G'))
 
-
     def read(self):
         # return the frame most recently read
         grabbed, frame = self.stream.read()
@@ -101,8 +100,8 @@ socket = context.socket(zmq.PUB)
 # set the high water mark to 2
 # this means that if the subscriber is not receiving messages
 # the publisher will drop all messages that are not the current frame
-socket.setsockopt(zmq.SNDHWM, 2)
-socket.setsockopt(zmq.RCVHWM, 2)
+socket.setsockopt(zmq.SNDHWM, 3)
+socket.setsockopt(zmq.RCVHWM, 3)
 # set linger to 0
 # this means that if the video stream is closed it won't try to deliver 
 # any messages that are still in the queue
@@ -113,12 +112,13 @@ socket.setsockopt(zmq.RCVHWM, 2)
 socket.bind(hostname)
 
 cap = VideoStream(src=0)
+other_cap = VideoStream(src=1)
+
+captures = [cap, other_cap]
 
 green = (0, 255, 0)
 
 i = 0
-
-send_jpg = True
 
 while True:
     i = i + 1
@@ -126,32 +126,28 @@ while True:
     msg = f'Image {i}'
 
     # open camera
-    image = cap.read()
+    images = [cap.read() for cap in captures]
 
-    if image is None:
+    if images[0] is None:
         print('No image')
         continue
 
     # add text to image
-    cv2.putText(image, f'Image {i}', (50, 50),
-                cv2.FONT_HERSHEY_SIMPLEX, 1, green, 2, cv2.LINE_AA)
-
+    for image in images:
+        cv2.putText(image, f'Image {i}', (50, 50),
+                    cv2.FONT_HERSHEY_SIMPLEX, 1, green, 2, cv2.LINE_AA)
 
     # create metadata
     md = dict(
-        dtype=str(image.dtype),
-        shape=image.shape,
-        type='jpg' if send_jpg else 'raw',
-        msg=msg
+        type='jpg',
+        count=len(captures),
     )
 
     # send the metadata about the image first
     socket.send_json(md, zmq.SNDMORE)
 
     # send the image
-    if send_jpg:
-        # encode the image as a jpeg
-        enc_image = encode_jpeg(image, 20)
+    # encode the image as a jpeg
+    encoded = [encode_jpeg(image, 20) for image in images]
+    for enc_image in encoded:
         socket.send(enc_image, zmq.NOBLOCK)
-    else:
-        socket.send(image, zmq.NOBLOCK)
