@@ -6,14 +6,19 @@ import socket
 import numpy as np
 import cv2
 import zmq
+import time
+
+WIDTH = 1280
+HEIGHT = 720
+
 
 class VideoStream:
     def __init__(self, src=0, name='VideoStream'):
         # initialize the video camera stream and read the first frame
         # from the stream
         self.stream = cv2.VideoCapture(src)
-        self.stream.set(cv2.CAP_PROP_FRAME_WIDTH, 1920)
-        self.stream.set(cv2.CAP_PROP_FRAME_HEIGHT, 1080)
+        self.stream.set(cv2.CAP_PROP_FRAME_WIDTH, WIDTH)
+        self.stream.set(cv2.CAP_PROP_FRAME_HEIGHT, HEIGHT)
         self.stream.set(cv2.CAP_PROP_FOURCC, cv2.VideoWriter_fourcc('M', 'J', 'P', 'G'))
 
         self.grabbed, self.frame = self.stream.read()
@@ -53,6 +58,8 @@ ap = argparse.ArgumentParser()
 
 context = zmq.Context()
 socket = context.socket(zmq.PUB)
+socket.setsockopt(zmq.SNDHWM, 1)
+socket.setsockopt(zmq.RCVHWM, 1)
 socket.bind("tcp://*:5555")
 
 cap = VideoStream(src=0)
@@ -63,10 +70,18 @@ i = 0
 
 send_jpg = True
 
+last_time = time.perf_counter() - 0.01
+current_time = time.perf_counter()
+
 while True:
 
     i = i + 1
     print(f'Sending image {i}')
+    last_time = current_time
+    current_time = time.perf_counter()
+    time_diff = current_time - last_time
+    fps = 1 / time_diff
+    print(f'FPS: {fps:2.2f}')
     msg = f'Image {i}'
 
     #open camera
@@ -74,7 +89,7 @@ while True:
 
     cv2.putText(image, f'Image {i}', (50, 50), cv2.FONT_HERSHEY_SIMPLEX, 1, green, 2, cv2.LINE_AA)
 
-    enc_image = encode_jpeg(image, 50)
+    enc_image = encode_jpeg(image, 20)
 
     md = dict(
         dtype = str(image.dtype),
@@ -88,3 +103,5 @@ while True:
         socket.send(enc_image, zmq.NOBLOCK)
     else:
         socket.send(image, zmq.NOBLOCK)
+
+    time.sleep(0.01)
