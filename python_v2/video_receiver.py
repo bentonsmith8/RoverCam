@@ -65,7 +65,11 @@ while True:
             images.append(image)
     except zmq.Again:
         # if the msg is empty, wait 10ms and try again
-        time.sleep(0.01)
+        time.sleep(0.05)
+        continue
+    except UnicodeDecodeError:
+        # if the msg is empty, wait 10ms and try again
+        time.sleep(0.05)
         continue
     end = time.perf_counter()
 
@@ -73,6 +77,7 @@ while True:
         (end - start) * 1000))
 
     # display the image
-    for i in range(len(images)):
-        cv2.imshow('Video Stream {}'.format(i), images[i])
+    for i, image in enumerate(images):
+        if image is not None:
+            cv2.imshow('Video Stream {}'.format(i), image)
     cv2.waitKey(1)
